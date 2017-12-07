@@ -31,14 +31,11 @@ func homeBidder(w http.ResponseWriter, r *http.Request) {
 	} else {
 		if last, err := redis.Int64(conn.Do("GET", "time:"+rec.Device.Ifa)); err == nil {
 			delta := float64(time.Now().Unix() - last)
-			log.Println(delta)
 			if delta > conf.AppConf.SeriaMax {
-				conn.Do("SET", "time:"+rec.Device.Ifa, time.Now().Unix())
 				conn.Do("SET", "pos:"+rec.Device.Ifa, 0)
 				fmt.Fprintf(w, "{\"pos:\"%d}\n", 0)
 			} else {
 				if delta > conf.AppConf.SeriaDelay {
-					conn.Do("SET", "time:"+rec.Device.Ifa, time.Now().Unix())
 					if n, err := conn.Do("INCR", "pos:"+rec.Device.Ifa); err == nil {
 						fmt.Fprintf(w, "{\"pos:\"%d}\n", n)
 					}
@@ -48,6 +45,7 @@ func homeBidder(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			}
+			conn.Do("SET", "time:"+rec.Device.Ifa, time.Now().Unix())
 		} else {
 			conn.Do("SET", "time:"+rec.Device.Ifa, time.Now().Unix())
 			conn.Do("SET", "pos:"+rec.Device.Ifa, 0)
